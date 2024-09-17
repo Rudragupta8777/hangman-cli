@@ -6,20 +6,24 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"net"
 	"os"
 	"strings"
 	"time"
 
 	"cloud.google.com/go/firestore"
 	"github.com/fatih/color"
+	"github.com/google/uuid"
 
 	firebase "firebase.google.com/go"
 	"google.golang.org/api/option"
 )
 
 type Team struct {
-	Name  string `json:"name"`
-	Score int    `json:"score"`
+	Name      string `json:"name"`
+	Score     int    `json:"score"`
+	MachineID string `json:"machineID"`
+	Attempts  int    `json:"attempts"`
 }
 
 type Riddle struct {
@@ -111,7 +115,7 @@ var hangmanStages = []string{
 
 var firebaseApp *firebase.App
 
-const firebaseCredentials = `` // copy paste the firebase credientials here
+const firebaseCredentials = `{}` // copy paste the firebase credientials here
 
 func initFirebase() {
 	opt := option.WithCredentialsJSON([]byte(firebaseCredentials))
@@ -122,7 +126,50 @@ func initFirebase() {
 	firebaseApp = app
 }
 
-func saveTeamScoreToFirebase(team Team) {
+func GetMACAddress() (string, error) {
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		return "", err
+	}
+
+	for _, iface := range interfaces {
+		if iface.Flags&net.FlagUp == 0 || (iface.Flags&net.FlagLoopback != 0) {
+			continue
+		}
+
+		addrs, err := iface.Addrs()
+		if err != nil {
+			continue
+		}
+
+		for _, addr := range addrs {
+			if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+				return iface.HardwareAddr.String(), nil
+			}
+		}
+	}
+
+	return "", fmt.Errorf("unable to get MAC address")
+}
+
+func GenerateUUID() (string, error) {
+	id := uuid.New()
+	return id.String(), nil
+}
+
+func getMachineID() string {
+	mac, err := GetMACAddress()
+	if err != nil || mac == "" {
+		id, err := GenerateUUID()
+		if err != nil {
+			log.Fatalf("Error generating UUID: %v\n", err)
+		}
+		return id
+	}
+	return mac
+}
+
+func saveTeamToFirebase(team Team) {
 	ctx := context.Background()
 	client, err := firebaseApp.Firestore(ctx)
 	if err != nil {
@@ -130,15 +177,38 @@ func saveTeamScoreToFirebase(team Team) {
 	}
 	defer client.Close()
 
-	// Update the score and name inside the document for the given team
 	_, err = client.Collection("teams").Doc(team.Name).Set(ctx, map[string]interface{}{
-		"score": team.Score,
-		"name":  team.Name,
-	}, firestore.MergeAll) // Use firestore.MergeAll to merge the fields
+		"score":     team.Score,
+		"name":      team.Name,
+		"machineID": team.MachineID,
+		"attempts":  team.Attempts,
+	}, firestore.MergeAll)
 
 	if err != nil {
-		log.Fatalf("Error updating score in Firebase: %v\n", err)
+		log.Fatalf("Error updating team in Firebase: %v\n", err)
 	}
+}
+
+func getTeamFromFirebase(teamName string) (Team, error) {
+	ctx := context.Background()
+	client, err := firebaseApp.Firestore(ctx)
+	if err != nil {
+		return Team{}, fmt.Errorf("error creating Firestore client: %v", err)
+	}
+	defer client.Close()
+
+	doc, err := client.Collection("teams").Doc(teamName).Get(ctx)
+	if err != nil {
+		return Team{}, fmt.Errorf("error retrieving team document: %v", err)
+	}
+
+	var team Team
+	err = doc.DataTo(&team)
+	if err != nil {
+		return Team{}, fmt.Errorf("error parsing team data: %v", err)
+	}
+
+	return team, nil
 }
 
 func randomRiddles(num int) []Riddle {
@@ -179,12 +249,12 @@ func startScoreUpdater(team *Team) {
 	go func() {
 		for {
 			time.Sleep(1 * time.Second) // Update score every 1 second
-			saveTeamScoreToFirebase(*team)
+			saveTeamToFirebase(*team)
 		}
 	}()
 }
 
-func displayLogo() {
+func displaysolarisLogo() {
 	yellow := color.New(color.FgYellow).SprintFunc()
 	fmt.Println(yellow(`  
 	                            +=                                                              
@@ -226,74 +296,94 @@ func displayLogo() {
 	fmt.Println(yellow("\t\tWelcome to the Solaris Hangman Game!\n"))
 }
 
+func displaygameoverLogo() {
+	red := color.New(color.FgHiRed).SprintFunc()
+	fmt.Println(red(`
+
+ ██████╗  █████╗ ███╗   ███╗███████╗     ██████╗ ██╗   ██╗███████╗██████╗ 
+██╔════╝ ██╔══██╗████╗ ████║██╔════╝    ██╔═══██╗██║   ██║██╔════╝██╔══██╗
+██║  ███╗███████║██╔████╔██║█████╗      ██║   ██║██║   ██║█████╗  ██████╔╝
+██║   ██║██╔══██║██║╚██╔╝██║██╔══╝      ██║   ██║╚██╗ ██╔╝██╔══╝  ██╔══██╗
+╚██████╔╝██║  ██║██║ ╚═╝ ██║███████╗    ╚██████╔╝ ╚████╔╝ ███████╗██║  ██║
+ ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝     ╚═════╝   ╚═══╝  ╚══════╝╚═╝  ╚═╝
+	`))
+}
+
 func userInterface() {
 	reader := bufio.NewReader(os.Stdin)
 	green := color.New(color.FgGreen).SprintFunc()
 	red := color.New(color.FgHiRed).SprintFunc()
 	blue := color.New(color.FgBlue).SprintFunc()
 
-	displayLogo()
+	displaysolarisLogo()
 
 	var teamName string
 	var team *Team
 	teamEntered := false
+	passwordVerified := false // Variable to track if the password was verified
 
 	for {
+		// Only ask for the password once, at the start
+		if !passwordVerified {
+			fmt.Print(green("Enter the password to start the game: "))
+			passwordEntered, _ := reader.ReadString('\n')
+			passwordEntered = strings.TrimSpace(passwordEntered)
+
+			correctPassword, err := getPasswordFromFirebase()
+			if err != nil {
+				fmt.Printf("Error retrieving password: %v\n", err)
+				continue
+			}
+
+			if passwordEntered != correctPassword {
+				fmt.Println(red("Incorrect password. Please try again."))
+				continue
+			}
+
+			passwordVerified = true // Mark the password as verified
+		}
 		if !teamEntered {
 			fmt.Print(green("Enter your team name: "))
 			teamName, _ = reader.ReadString('\n')
 			teamName = strings.TrimSpace(teamName)
-			team = &Team{Name: teamName, Score: 0}
+
+			existingTeam, err := getTeamFromFirebase(teamName)
+			if err == nil {
+				// Team exists, check machine ID
+				currentMachineID := getMachineID()
+				if existingTeam.MachineID != currentMachineID {
+					fmt.Println(red("Error: This team name is associated with a different machine. Please use a different team name or play on the original machine."))
+					continue
+				}
+				team = &existingTeam
+				team.Attempts++ // Increment attempts
+				team.Score = 0  // Reset score to zero for a new attempt
+			} else {
+				// New team
+				team = &Team{Name: teamName, Score: 0, MachineID: getMachineID(), Attempts: 1}
+			}
+			saveTeamToFirebase(*team)
 			teamEntered = true
 		}
 
-		fmt.Print(green("Enter the password to start the game: "))
-		passwordEntered, _ := reader.ReadString('\n')
-		passwordEntered = strings.TrimSpace(passwordEntered)
-
-		correctPassword, err := getPasswordFromFirebase()
-		if err != nil {
-			fmt.Printf("Error retrieving password: %v\n", err)
-			continue
-		}
-
-		if passwordEntered != correctPassword {
-			fmt.Println(red("Incorrect password. Please try again."))
-			continue
-		}
-
+		// Main game loop
 		fmt.Print(green("Type 'run' to start the game or 'close' to exit: "))
 		command, _ := reader.ReadString('\n')
 		command = strings.TrimSpace(strings.ToLower(command))
 
 		if command == "run" {
-			// Start a score updater goroutine to update the score every second
 			startScoreUpdater(team)
+
+			// fmt.Printf("Attempt #%d for team %s\n", team.Attempts, team.Name)
 
 			riddlesSubset := randomRiddles(10)
 			wrongGuesses := 0
 			for i, riddle := range riddlesSubset {
 				if wrongGuesses >= len(hangmanStages)-1 {
 					fmt.Println(red("You've been hanged!"))
-					drawHangman(wrongGuesses)
-
-					for {
-						fmt.Print(green("Type 'close' to exit or 'retry' to play again: "))
-						exitCommand, _ := reader.ReadString('\n')
-						exitCommand = strings.TrimSpace(strings.ToLower(exitCommand))
-
-						if exitCommand == "close" {
-							fmt.Println("Exiting the game...")
-							return
-						} else if exitCommand == "retry" {
-							fmt.Println("Starting a new game...")
-							break
-						} else {
-							fmt.Println(red("Invalid command. Please type 'close' or 'retry'."))
-						}
-					}
-
-					break
+					// drawHangman(wrongGuesses)
+					displaygameoverLogo()
+					break // Exit the riddle loop, move to exit/retry options
 				}
 
 				fmt.Printf("\n%s %s\n", green("Question "+fmt.Sprintf("%d:", i+1)), riddle.Question)
@@ -303,12 +393,12 @@ func userInterface() {
 
 				if guess == strings.ToLower(riddle.Answer) {
 					fmt.Println(blue("Correct! You solved the riddle!"))
-					team.Score++
-					saveTeamScoreToFirebase(*team) // Update Firebase immediately after correct guess
+					team.Score = team.Score + 5
+					saveTeamToFirebase(*team) // Update Firebase immediately after correct guess
 				} else {
 					wrongGuesses++
 					fmt.Println(red("Incorrect guess!"))
-					fmt.Println(green("The correct answer was: ", riddle.Answer))
+					fmt.Println(blue("The correct answer was: ", riddle.Answer))
 					drawHangman(wrongGuesses)
 				}
 
@@ -316,10 +406,26 @@ func userInterface() {
 				fmt.Printf("Team %s Score: %d\n", team.Name, team.Score)
 			}
 
-			saveTeamScoreToFirebase(*team)
+			saveTeamToFirebase(*team)
 
+			// After the game ends
+			// fmt.Printf("Game over! Final score for attempt #%d: %d\n", team.Attempts, team.Score)
+
+			// Ask to play again or exit
+			for {
+				fmt.Print(green("Type 'close' to exit: "))
+				command, _ := reader.ReadString('\n')
+				command = strings.TrimSpace(strings.ToLower(command))
+
+				if command == "close" {
+					fmt.Println(blue("Exiting the game..."))
+					return
+				} else {
+					fmt.Println(red("Invalid command. Please type 'play' or 'close'."))
+				}
+			}
 		} else if command == "close" {
-			fmt.Println("Exiting...")
+			fmt.Println(blue("Exiting..."))
 			break
 		} else {
 			fmt.Println(red("Invalid command"))

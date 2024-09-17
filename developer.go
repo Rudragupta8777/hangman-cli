@@ -16,8 +16,10 @@ import (
 )
 
 type Team struct {
-	Name  string `json:"name"`
-	Score int    `json:"score"`
+	Name      string `json:"name"`
+	Score     int    `json:"score"`
+	MachineID string `json:"machineID"`
+	Attempts  int    `json:"attempts"`
 }
 
 type Riddle struct {
@@ -27,7 +29,7 @@ type Riddle struct {
 
 var firebaseApp *firebase.App
 
-const firebaseCredentials = `` // copy paste the firebase credientials here
+const firebaseCredentials = `{}` // copy paste the firebase credientials here
 
 func initFirebase() {
 	opt := option.WithCredentialsJSON([]byte(firebaseCredentials))
@@ -110,7 +112,7 @@ func viewTeamsInFirebase() {
 		}
 		var team Team
 		doc.DataTo(&team)
-		fmt.Printf("Team: %s,\tScore: %d\n", team.Name, team.Score)
+		fmt.Printf("Team: %s,\tScore: %d,\tMachineID: %s,\tAttempts: %d\n", team.Name, team.Score, team.MachineID, team.Attempts)
 	}
 }
 
@@ -167,11 +169,11 @@ func developerInterface() {
 			fmt.Println()
 		case 2:
 			// Add a new riddle
-			fmt.Print("Enter the riddle question: ")
+			fmt.Print(green("Enter the riddle question: "))
 			question, _ := reader.ReadString('\n')
 			question = strings.TrimSpace(question)
 
-			fmt.Print("Enter the riddle answer: ")
+			fmt.Print(green("Enter the riddle answer: "))
 			answer, _ := reader.ReadString('\n')
 			answer = strings.TrimSpace(strings.ToLower(answer))
 
@@ -181,22 +183,22 @@ func developerInterface() {
 			}
 
 			addRiddleToFirebase(riddle)
-			fmt.Println("Riddle added successfully!")
+			fmt.Println(blue("Riddle added successfully!\n"))
 		case 3:
 			// Change the password
-			fmt.Print("Enter the current password: ")
+			fmt.Print(green("Enter the current password: "))
 			currentPassword, _ := reader.ReadString('\n')
 			currentPassword = strings.TrimSpace(currentPassword)
 
-			fmt.Print("Enter the new password: ")
+			fmt.Print(green("Enter the new password: "))
 			newPassword, _ := reader.ReadString('\n')
 			newPassword = strings.TrimSpace(newPassword)
 
 			err := changePasswordInFirebase(currentPassword, newPassword)
 			if err != nil {
-				fmt.Printf(red("Error changing password: %v\n", err))
+				fmt.Printf(red("Error changing password: %v\n", err) + "\n\n")
 			} else {
-				fmt.Println("Password changed successfully!")
+				fmt.Println(blue("Password changed successfully!\n"))
 			}
 		case 4:
 			fmt.Println(blue("Exiting..."))
