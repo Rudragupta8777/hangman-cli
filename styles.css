@@ -1,0 +1,128 @@
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap');
+
+/* Hide scrollbar in WebKit browsers */
+html::-webkit-scrollbar {
+    display: none; /* Hide scrollbar for WebKit browsers */
+}
+
+/* Hide scrollbar in Firefox */
+html {
+    scrollbar-width: none; /* Hide scrollbar for Firefox */
+}
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #141414;
+    background-image: url('/images/Desktop - 5.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    overflow-x: hidden;
+}
+
+h1 {
+    text-align: center;
+    color: #fff;
+    width: fit-content;
+    padding: 15px;
+    border-radius: 10px;
+    margin: 10% auto;
+    font-size: 50px;
+    margin-top: 70px;
+    font-weight: 700;
+}
+
+#prizes {
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+.prize {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 0 20px;
+    text-align: center;
+    box-shadow: 0 15px 25px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease;
+    position: relative;
+    margin-top: -50px;
+}
+
+.prize.first {
+    transform: translateY(-20px);
+}
+
+.prize.second {
+    transform: translateY(0px);
+}
+
+.prize.third {
+    transform: translateY(20px);
+}
+
+.prize:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 35px rgba(0, 0, 0, 0.5);
+}
+
+.team-info {
+    display: block;
+}
+
+.team-name {
+    font-size: 1.8em;
+    color: #ffdd57;
+}
+
+.team-score {
+    font-size: 1.5em;
+    color: #fff;
+    display: block;
+    margin-top: 5px;
+}
+
+#scoreBoard {
+    max-width: 600px;
+    margin: 50px auto 0;
+    background-color: rgba(27, 27, 27, 0.8);
+    border-radius: 5px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    padding: 20px;
+    color: #fff;
+}
+
+.scoreboard-header, .team {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    align-items: center;
+    text-align: center; /* Center-align items for all */
+    gap: 100px;
+}
+
+.scoreboard-header {
+    font-weight: bold;
+    color: #ffdd57;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.4);
+}
+
+.team:last-child {
+    border-bottom: none;
+}
+
+.scoreboard-header span, .team span {
+    flex: 1; /* Ensure equal space for all columns */
+    text-align: center;
+}
+
+#errorMessage {
+    color: red;
+    text-align: center;
+    margin-top: 20px;
+}

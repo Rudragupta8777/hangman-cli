@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOLARIS Game Scores</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+</head>
+<body>
+    <h1>Hangman Leaderboard</h1>
+    <div id="prizes">
+        <div class="prize second">
+            <span class="team-info">
+                <span id="second-team" class="team-name"></span><br>
+                <span class="team-score" id="second-score">Score : 50</span>
+            </span>
+        </div>
+        <div class="prize first">
+            <span class="team-info">
+                <span id="first-team" class="team-name"></span><br>
+                <span class="team-score" id="first-score">Score : 50</span>
+            </span>
+        </div>
+        <div class="prize third">
+            <span class="team-info">
+                <span id="third-team" class="team-name"></span><br>
+                <span class="team-score" id="third-score">Score : 50</span>
+            </span>
+        </div>
+    </div>
+    <div id="scoreBoard">
+        <div class="scoreboard-header">
+            <span>Place</span>
+            <span>Team Name</span>
+            <span>Score</span>
+        </div>
+        <div class="team">
+            <span>1</span>
+            <span class="team-name">Team A</span>
+            <span class="team-score">100</span>
+        </div>
+        <div class="team">
+            <span>2</span>
+            <span class="team-name">Team B</span>
+            <span class="team-score">90</span>
+        </div>
+        <div class="team">
+            <span>3</span>
+            <span class="team-name">Team C</span>
+            <span class="team-score">80</span>
+        </div>
+    </div>
+    <div id="errorMessage"></div>
+    <script src="script.js"></script>
+</body>
+</html>
