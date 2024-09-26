@@ -246,6 +246,32 @@ func viewApprovedTeamsInFirebase() {
 	println()
 }
 
+func viewRiddlesInFirebase() {
+	blue := color.New(color.FgBlue).SprintFunc()
+	green := color.New(color.FgGreen).SprintFunc()
+	ctx := context.Background()
+	client, err := firebaseApp.Firestore(ctx)
+	if err != nil {
+		log.Fatalf("Error creating Firestore client: %v\n", err)
+	}
+	defer client.Close()
+
+	iter := client.Collection("riddles").Documents(ctx)
+	fmt.Println(blue("\nAll Riddles:"))
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			log.Fatalf("Error iterating through riddles: %v\n", err)
+		}
+		var riddle Riddle
+		doc.DataTo(&riddle)
+		fmt.Printf(green("Question: ")+"%s\n"+green("Answer: ")+"%s\n\n", riddle.Question, riddle.Answer)
+	}
+}
+
 func developerInterface() {
 	reader := bufio.NewReader(os.Stdin)
 	blue := color.New(color.FgBlue).SprintFunc()
@@ -263,7 +289,8 @@ func developerInterface() {
 		fmt.Println("5. View Approved Teams")
 		fmt.Println("6. Set Game Duration")
 		fmt.Println("7. Delete All Riddles")
-		fmt.Println("8. Exit")
+		fmt.Println("8. View All Riddles") // New option
+		fmt.Println("9. Exit")
 		fmt.Print(green("Choose an option: "))
 
 		var choice int
@@ -280,7 +307,7 @@ func developerInterface() {
 
 			fmt.Print(green("Enter the riddle answer: "))
 			answer, _ := reader.ReadString('\n')
-			answer = strings.TrimSpace(strings.ToLower(answer))
+			answer = strings.TrimSpace(answer)
 
 			riddle := Riddle{
 				Question: question,
@@ -310,7 +337,7 @@ func developerInterface() {
 			teamName = strings.TrimSpace(teamName)
 
 			addApprovedTeamToFirebase(teamName)
-		case 5: // New option to view approved teams
+		case 5:
 			viewApprovedTeamsInFirebase()
 		case 6:
 			fmt.Print(green("Enter the game duration in minutes: "))
@@ -343,6 +370,8 @@ func developerInterface() {
 				fmt.Println(blue("Riddle deletion cancelled.\n"))
 			}
 		case 8:
+			viewRiddlesInFirebase() // New case to view all riddles
+		case 9:
 			fmt.Println(blue("Exiting..."))
 			return
 		default:

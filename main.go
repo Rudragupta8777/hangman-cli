@@ -379,18 +379,15 @@ func runRiddles(team *Team, riddlesSubset []Riddle, reader *bufio.Reader) {
 	green := color.New(color.FgGreen).SprintFunc()
 	blue := color.New(color.FgBlue).SprintFunc()
 	red := color.New(color.FgHiRed).SprintFunc()
-	// yellow := color.New(color.FgYellow).SprintFunc()
 
 	wrongGuesses := 0
 	for i, riddle := range riddlesSubset {
-		// Check if time is up before proceeding to the next riddle
 		select {
 		case <-timeUp:
 			fmt.Println(red("\nTime's up! The game is over."))
 			displaygameoverLogo()
 			return
 		default:
-			// Proceed with the next riddle if time is not up
 		}
 
 		if wrongGuesses >= len(hangmanStages)-1 {
@@ -400,12 +397,15 @@ func runRiddles(team *Team, riddlesSubset []Riddle, reader *bufio.Reader) {
 		}
 
 		fmt.Printf("\n%s %s\n", green("Question "+fmt.Sprintf("%d:", i+1)), riddle.Question)
-		fmt.Print(green("Enter your guess [whole word]: "))
+		fmt.Print(green("Enter your guess: "))
 		guess, _ := reader.ReadString('\n')
-		guess = strings.TrimSpace(strings.ToLower(guess)) // No lowercase conversion
+		guess = strings.TrimSpace(guess)
 
-		// Case-sensitive comparison for riddle answer
-		if guess == riddle.Answer {
+		// Normalize both the guess and the correct answer
+		normalizedGuess := normalizeString(guess)
+		normalizedAnswer := normalizeString(riddle.Answer)
+
+		if normalizedGuess == normalizedAnswer {
 			fmt.Println(blue("Correct! You solved the riddle!"))
 			team.Score = team.Score + 5
 			saveTeamToFirebase(*team)
@@ -420,6 +420,12 @@ func runRiddles(team *Team, riddlesSubset []Riddle, reader *bufio.Reader) {
 	}
 
 	saveTeamToFirebase(*team)
+}
+
+// Helper function to normalize strings for comparison
+func normalizeString(s string) string {
+	// Remove all spaces and convert to lowercase
+	return strings.ToLower(strings.ReplaceAll(s, " ", ""))
 }
 
 func userInterface() {
