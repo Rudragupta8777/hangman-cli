@@ -30,19 +30,15 @@ type Riddle struct {
 
 var firebaseApp *firebase.App
 
-os.Getenv("FIREBASE_CREDENTIALS")
+const firebaseCredentials = `` // copy paste the firebase credientials here
 
 func initFirebase() {
-    firebaseCredentials := os.Getenv("FIREBASE_CREDENTIALS")
-    if firebaseCredentials == "" {
-        log.Fatal("FIREBASE_CREDENTIALS environment variable is not set")
-    }
-    opt := option.WithCredentialsJSON([]byte(firebaseCredentials))
-    app, err := firebase.NewApp(context.Background(), nil, opt)
-    if err != nil {
-        log.Fatalf("Error initializing app: %v\n", err)
-    }
-    firebaseApp = app
+	opt := option.WithCredentialsJSON([]byte(firebaseCredentials))
+	app, err := firebase.NewApp(context.Background(), nil, opt)
+	if err != nil {
+		log.Fatalf("Error initializing app: %v\n", err)
+	}
+	firebaseApp = app
 }
 
 func changePasswordInFirebase(currentPassword, newPassword string) error {
@@ -385,9 +381,6 @@ func developerInterface() {
 }
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env file")
-	}
 	initFirebase()       // Initialize Firebase
 	developerInterface() // Run developer interface
 }

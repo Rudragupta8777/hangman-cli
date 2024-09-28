@@ -12,7 +12,6 @@ import (
 
 	"cloud.google.com/go/firestore"
 	"github.com/fatih/color"
-	"github.com/joho/godotenv"
 
 	firebase "firebase.google.com/go"
 	"google.golang.org/api/option"
@@ -102,19 +101,15 @@ var hangmanStages = []string{
 
 var firebaseApp *firebase.App
 
-os.Getenv("FIREBASE_CREDENTIALS")
+const firebaseCredentials = `` // copy paste the firebase credientials here
 
 func initFirebase() {
-    firebaseCredentials := os.Getenv("FIREBASE_CREDENTIALS")
-    if firebaseCredentials == "" {
-        log.Fatal("FIREBASE_CREDENTIALS environment variable is not set")
-    }
-    opt := option.WithCredentialsJSON([]byte(firebaseCredentials))
-    app, err := firebase.NewApp(context.Background(), nil, opt)
-    if err != nil {
-        log.Fatalf("Error initializing app: %v\n", err)
-    }
-    firebaseApp = app
+	opt := option.WithCredentialsJSON([]byte(firebaseCredentials))
+	app, err := firebase.NewApp(context.Background(), nil, opt)
+	if err != nil {
+		log.Fatalf("Error initializing app: %v\n", err)
+	}
+	firebaseApp = app
 }
 
 func getPasswordFromFirebase() (string, error) {
@@ -577,9 +572,6 @@ func userInterface() {
 }
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env file")
-	}
 	initFirebase()
 	userInterface()
 }

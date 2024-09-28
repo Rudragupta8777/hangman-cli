@@ -1,12 +1,4 @@
-const firebaseConfig = {
-    apiKey: "AIzaSyBqGpI2FfrDQ7X3DYcoyKNsDuav9EUQ7rg",
-    authDomain: "hangman-cli.firebaseapp.com",
-    databaseURL: "https://hangman-cli-default-rtdb.firebaseio.com",
-    projectId: "hangman-cli",
-    storageBucket: "hangman-cli.appspot.com",
-    messagingSenderId: "613562680386",
-    appId: "1:613562680386:web:0361d7d708ad0f97a559db"
-};
+const firebaseConfig = {}; // copy paste the firebase credientials here
 
 try {
     firebase.initializeApp(firebaseConfig);
