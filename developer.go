@@ -30,27 +30,19 @@ type Riddle struct {
 
 var firebaseApp *firebase.App
 
-const firebaseCredentials = `{
-	"type": "service_account",
-	"project_id": "hangman-cli",
-	"private_key_id": "2966177952a3d009b6ab832ba462f0f02ae2f73c",
-	"private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDb+H48dkhe90ld\nNvkWLevaIhzEBQoWH1hOBWNjkv6cUmbV9D/mH9ZsocFZsftBLDG4vPXVcjwrEMKC\n28fE8gdLSD/W1VOB9YNFl2wlVoHRg2SrzE56jGNcWRHQgz+R/kh+4yFBiuKmTcX2\n4Zh91z5iXMT7XnyD4FLyaBw8j4urjFcdG1PUJC9cEugH08RXuPFe7ckZaZDu+lfA\ndp8P1JSue5Z9lLeO6j0r91a7p7z4GTUEYE8zVtYRN5kFS1OQ5AcyI5WxpHwidAVJ\nBtMalDYgPQQKanwrnHCWClMH2AypeN3qigkLPhwDdqKpWuuoE5d7NoxjRFl7Ku/A\no6xe60zvAgMBAAECggEAUy8oEdZLLPqH+GOzE4OfJtjyluAu/cmxu6OG/99VQKla\nsTtSNMTCckdDVpebY/yB+xIeRy8ReNm4LQNPCvfZ8UqrtaLrlwBQua73GzGZGzF8\njwlOfkJ7yq72MSuJDT0jjjR3XZFXf7t2ixOp9qDAuzLI3SRQoxBgXcIoN3CzSVYv\n+EOxFXVBXJChxlluXLD/dq4vH+geKPMf8blDWuTxwJyBdGtQWvIx/nJeBzAYiC/+\nw5OVb2h0KLDZPCplpM1SLBURBqM+cJPi9kwPPqX9Tv9yErTcJPd9ynCC4ZUXvW4W\n8O6eioh3UPWjTIdtTiunWklYUtp485OsFfMPCtE/8QKBgQD2pnX+4UEuZv4GQtEt\nDkIZszDLxsP4M3nG9KqwGvgZFRlejcX+Pv4MfP955fMukE9BmQO2bwsKvJl1NVpP\nKtOSoKcCW7EkflS1z/tjAF/T+yjl6C6hB7Dj06yHoas/FPIA8EMQhrAoB7zx1CKW\nkxGdlD0r6+Gb4SIcpJe3karm8QKBgQDkTyD7a/7+RgdE9AMdltlJJKnjIa7IslD+\nkZksdircdoja6mcGDq5nuPVObV3AHO0GZ3gVUxdxo25vH8lqgNathU+W8u38WJhb\nENSicir2ntrkTX6HbVMxYre60cL+wNjaxFS+0N5RWMn+PXZqANxMnFzJTZb1QZug\nChutglgx3wKBgQCJLUFY1SysQwmqr8Soe1KV+ov7+XsKco6a8X5w3T74rDxk0xK3\n+Y7PoUFxKUvbrNT3lcNz1kRc31G110t31ki/NuxLqnVV55DzYU3d3NpvCjPP0hcE\n5kMiIprFAEw+lEaX8QhLi60zRkJ2eNYXyom0izqOT+01Bbw0E/JxXOmg8QKBgA90\nG7No9/WWH9/W9G8ISuTcinNJUF9dUoYorMmJphUOIO1QeHC8hamXp2MLnBDo5FJO\npp4q5adXfJ4g9K0001MjduOsxdcS2B0x4nKsb6QJ1J8nb60TBVKOcAlBMYW03/jO\n2T2hPasb63A+EMnUDRVScCVgDxvCuRn4FS+FZxrZAoGAffwED3ER8anS6ngu1iu+\njEW/GvMM7ONb59QMlHttrQotnJ+ENXIy3wFHmnwDkBkQqQkRhGukkOJkRJ9S92Xc\nEyDRM39rh7A1zs0nKFuSiro20d2TeinLQXLZT5elq6wknjqxOkLfYFcSkvhzT1IB\n1Y6VDCbgEbJcT2l5N//OcuI=\n-----END PRIVATE KEY-----\n",
-	"client_email": "firebase-adminsdk-vh83s@hangman-cli.iam.gserviceaccount.com",
-	"client_id": "117632128327902282897",
-	"auth_uri": "https://accounts.google.com/o/oauth2/auth",
-	"token_uri": "https://oauth2.googleapis.com/token",
-	"auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-	"client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-vh83s%40hangman-cli.iam.gserviceaccount.com",
-	"universe_domain": "googleapis.com"
-}` // copy paste the firebase credientials here
+os.Getenv("FIREBASE_CREDENTIALS")
 
 func initFirebase() {
-	opt := option.WithCredentialsJSON([]byte(firebaseCredentials))
-	app, err := firebase.NewApp(context.Background(), nil, opt)
-	if err != nil {
-		log.Fatalf("Error initializing app: %v\n", err)
-	}
-	firebaseApp = app
+    firebaseCredentials := os.Getenv("FIREBASE_CREDENTIALS")
+    if firebaseCredentials == "" {
+        log.Fatal("FIREBASE_CREDENTIALS environment variable is not set")
+    }
+    opt := option.WithCredentialsJSON([]byte(firebaseCredentials))
+    app, err := firebase.NewApp(context.Background(), nil, opt)
+    if err != nil {
+        log.Fatalf("Error initializing app: %v\n", err)
+    }
+    firebaseApp = app
 }
 
 func changePasswordInFirebase(currentPassword, newPassword string) error {
@@ -393,6 +385,9 @@ func developerInterface() {
 }
 
 func main() {
+	if err := godotenv.Load(); err != nil {
+		log.Fatal("Error loading .env file")
+	}
 	initFirebase()       // Initialize Firebase
 	developerInterface() // Run developer interface
 }
